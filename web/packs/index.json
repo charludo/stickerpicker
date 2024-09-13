@@ -1,0 +1,10 @@
+{
+  "packs": [
+    "FredFogel.json",
+    "LoveBirdsLife.json",
+    "LittleCrow.json",
+    "bribstuff.json",
+    "gifs.json"
+  ],
+  "homeserver_url": "https://matrix.paki.place"
+}
