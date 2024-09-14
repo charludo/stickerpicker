@@ -13,14 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, Optional
-from hashlib import sha256
-import mimetypes
 import argparse
-import os.path
 import asyncio
-import string
 import json
+import mimetypes
+import os.path
+import string
+from hashlib import sha256
+from typing import Dict, Optional
 
 try:
     import magic
@@ -36,11 +36,14 @@ def convert_name(name: str) -> str:
         ord(" "): ord("_"),
     }
     allowed_chars = string.ascii_letters + string.digits + "_-/.#"
-    return "".join(filter(lambda char: char in allowed_chars, name.translate(name_translate)))
+    return "".join(
+        filter(lambda char: char in allowed_chars, name.translate(name_translate))
+    )
 
 
-async def upload_sticker(file: str, directory: str, old_stickers: Dict[str, matrix.StickerInfo]
-                         ) -> Optional[matrix.StickerInfo]:
+async def upload_sticker(
+    file: str, directory: str, old_stickers: Dict[str, matrix.StickerInfo]
+) -> Optional[matrix.StickerInfo]:
     if file.startswith("."):
         return None
     path = os.path.join(directory, file)
@@ -51,7 +54,7 @@ async def upload_sticker(file: str, directory: str, old_stickers: Dict[str, matr
         mime = magic.from_file(path, mime=True)
     else:
         mime, _ = mimetypes.guess_type(file)
-    if not mime.startswith("image/"):
+    if not (mime.startswith("image/") or mime.startswith("video/")):
         return None
 
     print(f"Processing {file}", end="", flush=True)
@@ -126,14 +129,23 @@ async def main(args: argparse.Namespace) -> None:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config",
-                    help="Path to JSON file with Matrix homeserver and access_token",
-                    type=str, default="config.json", metavar="file")
-parser.add_argument("--title", help="Override the sticker pack displayname", type=str,
-                    metavar="title")
+parser.add_argument(
+    "--config",
+    help="Path to JSON file with Matrix homeserver and access_token",
+    type=str,
+    default="config.json",
+    metavar="file",
+)
+parser.add_argument(
+    "--title", help="Override the sticker pack displayname", type=str, metavar="title"
+)
 parser.add_argument("--id", help="Override the sticker pack ID", type=str, metavar="id")
-parser.add_argument("--add-to-index", help="Sticker picker pack directory (usually 'web/packs/')",
-                    type=str, metavar="path")
+parser.add_argument(
+    "--add-to-index",
+    help="Sticker picker pack directory (usually 'web/packs/')",
+    type=str,
+    metavar="path",
+)
 parser.add_argument("path", help="Path to the sticker pack directory", type=str)
 
 

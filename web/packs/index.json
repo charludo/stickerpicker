@@ -1,12 +1,12 @@
 {
-  "packs": [
-    "FredFogel.json",
-    "LoveBirdsLife.json",
-    "LittleCrow.json",
-    "bribstuff.json",
-    "lil_alpaca.json",
-    "FrederickAnimated.json",
-    "Polar_Owl.json"
-  ],
-  "homeserver_url": "https://matrix.paki.place"
+	"packs": [
+		"FredFogel.json",
+		"FrederickAnimated.json",
+		"Polar_Owl.json",
+		"LoveBirdsLife.json",
+		"LittleCrow.json",
+		"bribstuff.json",
+		"lil_alpaca.json"
+	],
+	"homeserver_url": "https://matrix.paki.place"
 }

@@ -13,13 +13,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from functools import partial
-from io import BytesIO
+import json
+import mimetypes
 import os.path
 import subprocess
-import json
 import tempfile
-import mimetypes
+from functools import partial
+from io import BytesIO
 
 try:
     import magic
@@ -30,7 +30,7 @@ from PIL import Image, ImageSequence
 
 from . import matrix
 
-open_utf8 = partial(open, encoding='UTF-8')
+open_utf8 = partial(open, encoding="UTF-8")
 
 
 def guess_mime(data: bytes) -> str:
@@ -57,10 +57,22 @@ def video_to_gif(data: bytes, mime: str) -> bytes:
             temp.flush()
             with tempfile.NamedTemporaryFile(suffix=ext) as temp_fixed:
                 print(".", end="", flush=True)
-                result = subprocess.run(["ffmpeg", "-y", "-i", temp.name, "-codec", "copy", temp_fixed.name],
-                                        capture_output=True)
+                result = subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        temp.name,
+                        "-codec",
+                        "copy",
+                        temp_fixed.name,
+                    ],
+                    capture_output=True,
+                )
                 if result.returncode != 0:
-                    raise RuntimeError(f"Run ffmpeg failed with code {result.returncode}, Error occurred:\n{result.stderr}")
+                    raise RuntimeError(
+                        f"Run ffmpeg failed with code {result.returncode}, Error occurred:\n{result.stderr}"
+                    )
                 temp_fixed.seek(0)
                 data = temp_fixed.read()
     with tempfile.NamedTemporaryFile(suffix=ext) as temp:
@@ -68,6 +80,7 @@ def video_to_gif(data: bytes, mime: str) -> bytes:
         temp.flush()
         with tempfile.NamedTemporaryFile(suffix=".gif") as gif:
             from moviepy.editor import VideoFileClip
+
             clip = VideoFileClip(temp.name)
             clip.write_gif(gif.name, logger=None)
             gif.seek(0)
@@ -79,10 +92,14 @@ def opermize_gif(data: bytes) -> bytes:
         gif.write(data)
         gif.flush()
         # use gifsicle to optimize gif
-        result = subprocess.run(["gifsicle", "--batch", "--optimize=3", "--colors=256", gif.name],
-                                capture_output=True)
+        result = subprocess.run(
+            ["gifsicle", "--batch", "--optimize=3", "--colors=256", gif.name],
+            capture_output=True,
+        )
         if result.returncode != 0:
-            raise RuntimeError(f"Run gifsicle failed with code {result.returncode}, Error occurred:\n{result.stderr}")
+            raise RuntimeError(
+                f"Run gifsicle failed with code {result.returncode}, Error occurred:\n{result.stderr}"
+            )
         gif.seek(0)
         return gif.read()
 
@@ -100,13 +117,16 @@ def _convert_image(data: bytes, mimetype: str) -> (bytes, int, int):
         # Save the new GIF
         frames[0].save(
             new_file,
-            format='GIF',
+            format="GIF",
             save_all=True,
             append_images=frames[1:],
-            loop=image.info.get('loop', 0),  # Default loop to 0 if not present
-            duration=image.info.get('duration', 100),  # Set a default duration if not present
-            transparency=image.info.get('transparency', 255),  # Default to 255 if transparency is not present
-            disposal=image.info.get('disposal', 2)  # Default to disposal method 2 (restore to background)
+            loop=image.info.get("loop", 0),  # Default loop to 0 if not present
+            duration=image.info.get(
+                "duration", 100
+            ),  # Set a default duration if not present
+            disposal=image.info.get(
+                "disposal", 2
+            ),  # Default to disposal method 2 (restore to background)
         )
         # Get the size of the first frame to determine resizing
         w, h = frames[0].size
@@ -135,6 +155,7 @@ def _convert_sticker(data: bytes) -> (bytes, str, int, int):
         print(".", end="", flush=True)
         # unzip file
         import gzip
+
         with gzip.open(BytesIO(data), "rb") as f:
             data = f.read()
             mimetype = guess_mime(data)
@@ -145,10 +166,13 @@ def _convert_sticker(data: bytes) -> (bytes, str, int, int):
                     # run lottie_convert.py input output
                     print(".", end="", flush=True)
                     import subprocess
+
                     cmd = ["lottie_convert.py", temp.name, gif.name]
                     result = subprocess.run(cmd, capture_output=True, text=True)
                     if result.returncode != 0:
-                        raise RuntimeError(f"Run {cmd} failed with code {retcode}, Error occurred:\n{result.stderr}")
+                        raise RuntimeError(
+                            f"Run {cmd} failed with code {retcode}, Error occurred:\n{result.stderr}"
+                        )
                     gif.seek(0)
                     data = gif.read()
                     mimetype = "image/gif"
@@ -157,7 +181,7 @@ def _convert_sticker(data: bytes) -> (bytes, str, int, int):
     if mimetype == "image/gif":
         print(".", end="", flush=True)
         data = opermize_gif(data)
-    return  data, mimetype, rlt[1], rlt[2]
+    return data, mimetype, rlt[1], rlt[2]
 
 
 def convert_sticker(data: bytes) -> (bytes, str, int, int):
@@ -189,8 +213,9 @@ def add_to_index(name: str, output_dir: str) -> None:
         print(f"Added {name} to {index_path}")
 
 
-def make_sticker(mxc: str, width: int, height: int, size: int,
-                 mimetype: str, body: str = "") -> matrix.StickerInfo:
+def make_sticker(
+    mxc: str, width: int, height: int, size: int, mimetype: str, body: str = ""
+) -> matrix.StickerInfo:
     return {
         "body": body,
         "url": mxc,
@@ -199,7 +224,6 @@ def make_sticker(mxc: str, width: int, height: int, size: int,
             "h": height,
             "size": size,
             "mimetype": mimetype,
-
             # Element iOS compatibility hack
             "thumbnail_url": mxc,
             "thumbnail_info": {
